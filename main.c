@@ -64,29 +64,7 @@ priorityQueue *createQueue(void)
 	return q;
 }
 
-void queue(priorityQueue *q, char unsigned c, int frequency)
-{
-	node *new = createNode(c, frequency);
-
-	if(is_empty(q) || frequency < q->head->frequency)
-	{
-		new->next = q->head;
-		q->head = new;
-	}
-
-	else
-	{
-		node *current = q->head;
-		while((current->next != NULL) && (current->next->frequency < frequency))
-		{
-			current = current->next;
-		}
-		new->next = current->next;
-		current->next = new;
-	}
-}
-
-void queueParent(priorityQueue *q, node *new)
+void queue(priorityQueue *q, node *new)
 {
 	if(is_empty(q) || new->frequency < q->head->frequency)
 	{
@@ -108,15 +86,22 @@ void queueParent(priorityQueue *q, node *new)
 
 void dequeue(priorityQueue *q)
 {
+
+	int i;
+
 	if(is_empty(q))
 	{
 		printf("Queue is empty\n");
 	}
 	else
 	{	
-		node *new = q->head;
-		q->head = q->head->next;
-		new->next = NULL;
+		for (i = 0; i < 2; ++i)
+		{
+			node *new = q->head;
+			q->head = q->head->next;
+			new->next = NULL;
+		}
+
 	}
 }
 
@@ -139,7 +124,8 @@ void addToQueue(priorityQueue *q, int *frequency)
 	{
 		if(frequency[i])
 		{
-			queue(q, i, frequency[i]);
+			node* node = createNode(i,frequency[i]);
+			queue(q, node); 		
 		}
 	}
 }
@@ -159,6 +145,7 @@ int sizeQueue(priorityQueue *q)
 
 void createHuffmanTree(priorityQueue *q)
 {
+	printQueue(q);
 	if(sizeQueue(q) == 1) return;
 
 	node *child1 = q->head;
@@ -167,10 +154,8 @@ void createHuffmanTree(priorityQueue *q)
 
 	new->left = child1;
 	new->right = child2;
-
 	dequeue(q);
-	dequeue(q);
-	queueParent(q,new);
+	queue(q,new);
 
 	createHuffmanTree(q);
 }
@@ -181,23 +166,67 @@ int is_child(node *t)
 	else return 0;
 }
 
-void getcodeMap(int *codeMap[][256], priorityQueue *q)
+void generateCodeMap(unsigned char codeMap[][9], unsigned char *temp, node *root, int i)
 {
-	int i = 0;
-	node *aux = q->head;
 
+	if(is_child(root))
+	{
+		int j;
+		for(j = 0; j < i; j++)
+		{
+			codeMap[root->c][j] = temp[j];
+		}
+		codeMap[root->c][j] = '\0';
+	}
+
+	if(root->left != NULL)
+	{
+		temp[i] = '0';
+		temp[i+1] = '\0';
+		generateCodeMap(codeMap, temp, root->left, i + 1);
+		temp[i] = '\0';
+	}
+
+	if(root->right != NULL)
+	{
+		temp[i] = '1';
+		temp[i+1] = '\0';
+		generateCodeMap(codeMap, temp, root->right, i + 1);
+		temp[i] = '\0';
+	}
+}
+
+void createEmptyTable(unsigned char codeMap[][9])
+{
+	int i;
+	for(i = 0; i < 256; i++)
+	{
+		codeMap[i][0] = '\0';
+	}
 }
 
 int compress(FILE *file)
 {
 	int frequency[256] = {0};
-	unsigned char codeMap[10][256]= {0};
+	unsigned char codeMap[256][9];
+	unsigned char temp[256];
 	priorityQueue *q  = createQueue();
+
+	temp[0] = '\0';
 
 	getByteFrequency(file, frequency);
 	addToQueue(q,frequency);
 	createHuffmanTree(q);
 
+	createEmptyTable(codeMap);
+	generateCodeMap(codeMap, temp, q->head, 0);
+
+	/*
+	for(int i = 0; i < 256; i++)
+	{
+		if(codeMap[i][0] != '\0') printf("%s\n",codeMap[i]);
+	}
+	
 	//DEBUG
 	printf("PRINT QUEUE ESTADO FINAL\n");
 	printQueue(q);
@@ -206,6 +235,7 @@ int compress(FILE *file)
 	print_pre_order(q->head);
 	printf("FIM DA ARVORE\n");
 	//END
+	*/
 }
 
 int main()
@@ -214,4 +244,4 @@ int main()
 	file = fopen("teste.txt","rb");
 	compress(file);
 	fclose(file);	
-}	
+}
