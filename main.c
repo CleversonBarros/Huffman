@@ -4,6 +4,7 @@
 
 typedef struct node node;
 typedef struct priorityQueue priorityQueue;
+typedef struct header header;
 
 struct node
 {
@@ -12,6 +13,12 @@ struct node
 	node *next;
 	node *left;
 	node *right;
+};
+
+struct header
+{
+	int treeSize;
+	int trashSize;
 };
 
 struct priorityQueue
@@ -145,7 +152,6 @@ int sizeQueue(priorityQueue *q)
 
 void createHuffmanTree(priorityQueue *q)
 {
-	printQueue(q);
 	if(sizeQueue(q) == 1) return;
 
 	node *child1 = q->head;
@@ -205,8 +211,45 @@ void createEmptyTable(unsigned char codeMap[][9])
 	}
 }
 
+int trash_size(unsigned char codeMap[][9], int *frequency)
+{
+	int size = 0;
+	int i, trash;
+
+	for(i = 0; i < 256; i++)
+	{
+		if(codeMap[i][0] != '\0')
+		{
+			size += (strlen(codeMap[i]) * frequency[i]);
+		}
+	}
+
+	trash = 8 - (size % 8);
+
+	return trash;
+}
+
+int tree_size(node 	*root)
+{
+	if(root == NULL) return 0;
+	return 1 + tree_size(root->left) + tree_size(root->right);
+}
+
+
+/*
+char *decimalToBinary(int x)
+{
+	char binary[9];
+
+}
+*/
+
+
 int compress(FILE *file)
 {
+	FILE *output;
+	output = fopen("pronto.das","wb");
+
 	int frequency[256] = {0};
 	unsigned char codeMap[256][9];
 	unsigned char temp[256];
@@ -220,23 +263,32 @@ int compress(FILE *file)
 
 	createEmptyTable(codeMap);
 	generateCodeMap(codeMap, temp, q->head, 0);
+//	writeheader(output, q->head);
+
+	//Escrever tamanho do lixo, da arvore, e a arvore.
 
 	/*
+	//DEBUG
+	//MATRIZ
 	for(int i = 0; i < 256; i++)
 	{
 		if(codeMap[i][0] != '\0') printf("%s\n",codeMap[i]);
 	}
-	
-	//DEBUG
+	//FILA E ARVORE
 	printf("PRINT QUEUE ESTADO FINAL\n");
 	printQueue(q);
 	printf("FIM DA QUEUE\n");
 	printf("PRINT DA ARVORE ESTADO FINAL");
 	print_pre_order(q->head);
 	printf("FIM DA ARVORE\n");
+	
+	//TAMANHO ARVORE E TAMANHO LIXO
+	printf("tamanho da arvore %d\n",tree_size(q->head));
+	printf("tamanho do lixo %d\n",trash_size(codeMap, frequency));
 	//END
 	*/
 }
+
 
 int main()
 {
