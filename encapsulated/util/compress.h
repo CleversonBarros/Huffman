@@ -3,7 +3,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include "../data_structs/binary_tree.h"
-#include "../data_structs/priority)queue.h"
+#include "../data_structs/priority_queue.h"
 #include "../data_structs/hash_table.h"
 
 void get_byte_frequency(FILE *file, int *frequency);
