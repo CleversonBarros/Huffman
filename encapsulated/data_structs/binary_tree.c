@@ -1,7 +1,5 @@
 #include "binary_tree.h"
 
-typedef struct node node;
-
 struct node
 {
 	unsigned char item;
