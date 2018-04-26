@@ -1,4 +1,4 @@
-#include "hash_table"
+#include "hash_table.h"
 
 void create_empty_table(unsigned char code_map[][9])
 {
