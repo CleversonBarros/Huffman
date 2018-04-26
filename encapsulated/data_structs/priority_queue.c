@@ -64,7 +64,7 @@ void add_queue(priority_queue *q, int *frequency) //(falta colocar void aq)
 	{
 		if(frequency[i])
 		{
-			node* node = createNode(i,frequency[i]);
+			node* node = create_node(i,frequency[i]);
 			queue(q, node); 		
 		}
 	}
