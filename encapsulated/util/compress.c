@@ -13,11 +13,11 @@ void get_byte_frequency(FILE *file, int *frequency)
 
 void create_huffman_tree(priority_queue *q)
 {
-	if(sizeQueue(q) == 1) return;
+	if(size_queue(q) == 1) return;
 
 	node *child1 = q->head;
 	node *child2 = q->head->next;
-	node *new = createNode('*',child1->frequency + child2->frequency);
+	node *new = create_node('*',child1->frequency + child2->frequency);
 
 	new->left = child1;
 	new->right = child2;
