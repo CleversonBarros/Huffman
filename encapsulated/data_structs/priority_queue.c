@@ -1,8 +1,5 @@
 #include "priority_queue.h"
 
-
-typedef struct priority_queue priority_queue;
-
 struct priority_queue
 {
 	node *head;
