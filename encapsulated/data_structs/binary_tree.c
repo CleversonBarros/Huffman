@@ -35,7 +35,7 @@ void print_pre_order(node *tree)
 {
 	if (tree != NULL)
 	{
-		printf("%c|%d\n", tree->c,tree->frequency);
+		printf("%c|%d\n", tree->item,tree->frequency);
 		print_pre_order(tree->left);
 		print_pre_order(tree->right);
 	}
