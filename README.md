@@ -1,2 +1,2 @@
-# Huffman (use o encapsulado!)
+# Huffman 
 Projeto de Estrutura de Dados
