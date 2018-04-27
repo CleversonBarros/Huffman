@@ -1,3 +1,4 @@
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -27,7 +28,6 @@ struct priorityQueue
 };
 
 
-// DEBUG
 void printQueue(priorityQueue *q)
 {
 	node *aux;
@@ -45,8 +45,6 @@ void print_pre_order(node *tree)
 		print_pre_order(tree->right);
 	}
 }
-
-//END
 
 node *createNode(char unsigned c, int frequency)
 {
@@ -232,17 +230,14 @@ int trash_size(unsigned char codeMap[][9], int *frequency)
 int tree_size(node 	*root)
 {
 	if(root == NULL) return 0;
+	
+	if(is_child(root) && (root->c == '*' || root->c == '\\'))
+	{
+		return 2;
+	}
+	
 	return 1 + tree_size(root->left) + tree_size(root->right);
 }
-
-
-/*
-char *decimalToBinary(int x)
-{
-	char binary[9];
-
-}
-*/
 
 
 int compress(FILE *file)
