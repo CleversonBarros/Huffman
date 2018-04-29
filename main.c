@@ -1,11 +1,9 @@
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 typedef struct node node;
 typedef struct priorityQueue priorityQueue;
-typedef struct header header;
 
 struct node
 {
@@ -14,12 +12,6 @@ struct node
 	node *next;
 	node *left;
 	node *right;
-};
-
-struct header
-{
-	int treeSize;
-	int trashSize;
 };
 
 struct priorityQueue
@@ -40,7 +32,7 @@ void printQueue(priorityQueue *q)
 void print_pre_order(node *tree)
 {
 	if (tree != NULL) {
-		printf("%c|%d\n", tree->c,tree->frequency);
+		printf("%hhX|%d\n", tree->c,tree->frequency);
 		print_pre_order(tree->left);
 		print_pre_order(tree->right);
 	}
@@ -121,6 +113,18 @@ void getByteFrequency(FILE *file, int *frequency)
 
 }
 
+unsigned char set_bit(unsigned char c, int i)
+{
+	unsigned char mask = 1 << i;
+	return mask | c;
+}
+
+int is_bit_i_set(unsigned char c, int i)
+{
+	unsigned char mask = 1 << i;
+	return mask & c;
+}
+
 void addToQueue(priorityQueue *q, int *frequency)
 {
 	unsigned int i;
@@ -170,7 +174,7 @@ int is_child(node *t)
 	else return 0;
 }
 
-void generateCodeMap(unsigned char codeMap[][9], unsigned char *temp, node *root, int i)
+void generateCodeMap(unsigned char codeMap[][256], unsigned char *temp, node *root, int i)
 {
 
 	if(is_child(root))
@@ -186,7 +190,6 @@ void generateCodeMap(unsigned char codeMap[][9], unsigned char *temp, node *root
 	if(root->left != NULL)
 	{
 		temp[i] = '0';
-		temp[i+1] = '\0';
 		generateCodeMap(codeMap, temp, root->left, i + 1);
 		temp[i] = '\0';
 	}
@@ -194,13 +197,12 @@ void generateCodeMap(unsigned char codeMap[][9], unsigned char *temp, node *root
 	if(root->right != NULL)
 	{
 		temp[i] = '1';
-		temp[i+1] = '\0';
 		generateCodeMap(codeMap, temp, root->right, i + 1);
 		temp[i] = '\0';
 	}
 }
 
-void createEmptyTable(unsigned char codeMap[][9])
+void createEmptyTable(unsigned char codeMap[][256])
 {
 	int i;
 	for(i = 0; i < 256; i++)
@@ -209,16 +211,16 @@ void createEmptyTable(unsigned char codeMap[][9])
 	}
 }
 
-int trash_size(unsigned char codeMap[][9], int *frequency)
+int trashSize(unsigned char codeMap[][256], int *frequency)
 {
 	int size = 0;
 	int i, trash;
 
 	for(i = 0; i < 256; i++)
 	{
-		if(codeMap[i][0] != '\0')
+		if(frequency[i])
 		{
-			size += (strlen(codeMap[i]) * frequency[i]);
+			size += (strlen(codeMap[i]) * frequency[i]) ;
 		}
 	}
 
@@ -227,7 +229,7 @@ int trash_size(unsigned char codeMap[][9], int *frequency)
 	return trash;
 }
 
-int tree_size(node 	*root)
+int treeSize(node *root)
 {
 	if(root == NULL) return 0;
 	
@@ -236,59 +238,107 @@ int tree_size(node 	*root)
 		return 2;
 	}
 	
-	return 1 + tree_size(root->left) + tree_size(root->right);
+	return 1 + treeSize(root->left) + treeSize(root->right);
 }
 
+void writeHeader(FILE *output, int tree_size, int trash_size)
+{
+	unsigned char primeiroByte;
+	unsigned char segundoByte;
+	rewind(output);
 
-int compress(FILE *file)
+	primeiroByte = tree_size >> 8;
+	trash_size = trash_size << 5;
+	primeiroByte |= trash_size;
+	segundoByte = tree_size;
+
+	fprintf(output, "%c",primeiroByte);
+	fprintf(output, "%c",segundoByte);
+}
+
+void writeHuffmanTree(FILE *output, node *root)
+{
+	if(root == NULL) return;
+	
+	if((root->c == '*' || root->c == '\\') && is_child(root))
+	{
+		fprintf(output,"\\%c",root->c);
+	}
+
+	else
+	{
+		fprintf(output, "%c",root->c);
+	}
+
+	writeHuffmanTree(output, root->left);
+	writeHuffmanTree(output, root->right);	
+}
+
+void writeFileCompressed(FILE *input, FILE *output, unsigned char codeMap[][256])
+{
+	unsigned char c;
+	unsigned char byte;
+	int i, bit;
+
+	byte = 0;
+	bit = 7;
+
+	rewind(input);
+	while(fscanf(input,"%c",&c) != EOF)
+	{
+		for(i = 0; codeMap[c][i] != '\0'; i++)
+		{
+			if(bit < 0)
+			{
+				fprintf(output,"%c",byte);
+				byte = 0;
+				bit = 7;
+			}
+
+			if(codeMap[c][i] == '1')
+			{
+				byte = set_bit(byte,bit);
+			}
+			bit--;
+		}
+	}
+
+	fprintf(output,"%c",byte);
+	
+}
+
+int compress(FILE *input)
 {
 	FILE *output;
-	output = fopen("pronto.das","wb");
+	output = fopen("comprimido.huff","wb");
 
 	int frequency[256] = {0};
-	unsigned char codeMap[256][9];
+	unsigned char codeMap[256][256];
 	unsigned char temp[256];
 	priorityQueue *q  = createQueue();
 
 	temp[0] = '\0';
 
-	getByteFrequency(file, frequency);
+	getByteFrequency(input, frequency);
 	addToQueue(q,frequency);
 	createHuffmanTree(q);
 
 	createEmptyTable(codeMap);
 	generateCodeMap(codeMap, temp, q->head, 0);
-//	writeheader(output, q->head);
-
-	//Escrever tamanho do lixo, da arvore, e a arvore.
-
-	/*
-	//DEBUG
-	//MATRIZ
-	for(int i = 0; i < 256; i++)
-	{
-		if(codeMap[i][0] != '\0') printf("%s\n",codeMap[i]);
-	}
-	//FILA E ARVORE
-	printf("PRINT QUEUE ESTADO FINAL\n");
-	printQueue(q);
-	printf("FIM DA QUEUE\n");
-	printf("PRINT DA ARVORE ESTADO FINAL");
-	print_pre_order(q->head);
-	printf("FIM DA ARVORE\n");
 	
-	//TAMANHO ARVORE E TAMANHO LIXO
-	printf("tamanho da arvore %d\n",tree_size(q->head));
-	printf("tamanho do lixo %d\n",trash_size(codeMap, frequency));
-	//END
-	*/
+	writeHeader(output, treeSize(q->head), trashSize(codeMap, frequency));
+	writeHuffmanTree(output, q->head);
+	writeFileCompressed(input, output, codeMap);
+
+	fclose(input);
+	fclose(output);
 }
 
 
 int main()
 {
 	FILE *file;
-	file = fopen("teste.txt","rb");
+	file = fopen("entrada.txt","rb");
 	compress(file);
 	fclose(file);	
 }
