@@ -32,7 +32,7 @@ void printQueue(priorityQueue *q)
 void print_pre_order(node *tree)
 {
 	if (tree != NULL) {
-		printf("%hhX|%d\n", tree->c,tree->frequency);
+		printf("%c|%d\n", tree->c,tree->frequency);
 		print_pre_order(tree->left);
 		print_pre_order(tree->right);
 	}
@@ -111,6 +111,12 @@ void getByteFrequency(FILE *file, int *frequency)
 		frequency[c]++;
 	}
 
+}
+
+int set_bitInt(int c, int i)
+{
+	int mask = 1 << i;
+	return mask | c;
 }
 
 unsigned char set_bit(unsigned char c, int i)
@@ -326,6 +332,9 @@ int compress(FILE *input)
 	createEmptyTable(codeMap);
 	generateCodeMap(codeMap, temp, q->head, 0);
 	
+	//print_pre_order(q->head);
+	//printf("%d\n",trashSize(codeMap, frequency));
+
 	writeHeader(output, treeSize(q->head), trashSize(codeMap, frequency));
 	writeHuffmanTree(output, q->head);
 	writeFileCompressed(input, output, codeMap);
@@ -334,11 +343,158 @@ int compress(FILE *input)
 	fclose(output);
 }
 
+int getTrashSize(FILE *input)
+{
+	unsigned char byte;
+	int trashSize;
+
+	fscanf(input,"%c",&byte);
+	trashSize = byte >> 5;
+	return trashSize;
+}
+
+int getTreeSize(FILE *input)
+{
+	unsigned char byte;
+	int treeSize = 0, i;
+
+	fseek(input, 0, SEEK_SET);
+	fscanf(input,"%c",&byte);
+
+	for(i = 4; i >= 0; i--)
+	{
+		if(is_bit_i_set(byte, i))
+		{
+			treeSize = set_bitInt(treeSize,i + 8);
+		}
+	}
+
+	fscanf(input,"%c",&byte);
+
+	for(i = 7; i >= 0; i--)
+	{
+		if(is_bit_i_set(byte,i))
+		{
+			treeSize = set_bitInt(treeSize, i);
+		}
+	}
+	
+	return treeSize;
+}
+
+node *rebuildHuffmanTree(FILE *input, int *treeSize)
+{
+	if(treeSize < 0) return NULL;
+	
+	unsigned char c;
+	unsigned char aux;
+	node *root;
+	fscanf(input,"%c",&c);
+
+	if(c == '*')
+	{
+		root = createNode(c,0);
+		(*treeSize)--;
+		root->left = rebuildHuffmanTree(input,treeSize);
+		(*treeSize)--;
+		root->right = rebuildHuffmanTree(input,treeSize);
+	}
+	
+	if(c == '\\')
+	{
+		(*treeSize)--;
+		fscanf(input,"%c",&c);
+		root = createNode(c,0);
+	}
+
+	else if(c != '*')
+	{
+		(*treeSize)--;
+		root = createNode(c,0);
+	}
+
+	return root;
+}
+
+
+int size_file(FILE *file)
+{
+	int p = ftell(file);
+	int size;
+	fseek(file, 0, SEEK_END);
+	size = ftell(file);
+	fseek(file, p, SEEK_SET);
+
+	return size;
+}
+
+void writeFileDecompressed(FILE *input, FILE *output, node *root, int trashSize, int treeSize)
+{
+	unsigned char c;
+	int sizeFile, bit, i;
+	node *rootAux = root;
+
+	sizeFile = size_file(input) - treeSize - 3;
+
+	while(sizeFile--)
+	{
+		fscanf(input,"%c",&c);
+		for(i = 7; i >= 0; i--)
+		{
+			if(is_bit_i_set(c, i))
+			{
+				rootAux = rootAux->right;
+			}
+			else
+			{
+				rootAux = rootAux->left;
+			}
+
+			if(is_child(rootAux))
+			{
+				fprintf(output, "%c", rootAux->c);
+				rootAux = root;
+			}
+		}
+	}
+
+	fscanf(input,"%c",&c);
+	for(i = 7; i >= trashSize; i--)
+	{
+		if(is_bit_i_set(c, i))
+		{
+			rootAux = rootAux->right;
+		}
+		else
+		{
+			rootAux = rootAux->left;
+		}
+
+		if(is_child(rootAux))
+		{
+			printf("%c\n",rootAux->c);
+			fprintf(output, "%c", rootAux->c);
+			rootAux = root;
+		}
+	}
+}
+
+int decompress(FILE *input)
+{
+	int trashSize = getTrashSize(input);
+	int treeSize = getTreeSize(input);
+	int treeSizeBackup = treeSize;
+	FILE *output = fopen("descomprimiu","wb");
+
+	node *root = rebuildHuffmanTree(input,&treeSize);
+	writeFileDecompressed(input, output, root, trashSize, treeSizeBackup);
+
+}
 
 int main()
 {
 	FILE *file;
-	file = fopen("entrada.txt","rb");
-	compress(file);
+	file = fopen("comprimido.huff","rb");
+	decompress(file);
 	fclose(file);	
 }
