@@ -4,6 +4,8 @@
 #include "./data_structs/binary_tree.h"
 #include "./data_structs/linked_list.h"
 
+/* gcc -o exec main.c data_structs/binary_tree.c data_structs/linked_list.c */
+
 int main()
 {
 
