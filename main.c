@@ -7,7 +7,7 @@ typedef struct priorityQueue priorityQueue;
 
 struct node
 {
-	unsigned char c;
+	void *c;
 	int frequency;
 	node *next;
 	node *left;
@@ -19,29 +19,37 @@ struct priorityQueue
 	node *head;
 };
 
+unsigned char get_item(node *node)
+{
+	 unsigned char *item = (unsigned char*) node->c;
+	 return *item;
+}
 
 void printQueue(priorityQueue *q)
 {
 	node *aux;
 	for(aux = q->head; aux != NULL; aux = aux->next)
 	{
-		printf("%c|%d\n",aux->c,aux->frequency);
+		printf("%c|%d\n",get_item(aux),aux->frequency);
 	}
 }
 
 void print_pre_order(node *tree)
 {
 	if (tree != NULL) {
-		printf("%c|%d\n", tree->c,tree->frequency);
+		printf("%c|%d\n", get_item(tree),tree->frequency);
 		print_pre_order(tree->left);
 		print_pre_order(tree->right);
 	}
 }
 
-node *createNode(char unsigned c, int frequency)
+node *createNode(unsigned char c, int frequency)
 {
+	unsigned char *item = (unsigned char*) malloc (sizeof(unsigned char));
+	*item = c;
+
 	node *new = (node*)malloc(sizeof(node));
-	new->c = c;
+	new->c = item;
 	new->frequency = frequency;
 	new->left = NULL;
 	new->right = NULL;
@@ -180,6 +188,7 @@ int is_child(node *t)
 	else return 0;
 }
 
+
 void generateCodeMap(unsigned char codeMap[][256], unsigned char *temp, node *root, int i)
 {
 
@@ -188,9 +197,9 @@ void generateCodeMap(unsigned char codeMap[][256], unsigned char *temp, node *ro
 		int j;
 		for(j = 0; j < i; j++)
 		{
-			codeMap[root->c][j] = temp[j];
+			codeMap[get_item(root)][j] = temp[j];
 		}
-		codeMap[root->c][j] = '\0';
+		codeMap[get_item(root)][j] = '\0';
 	}
 
 	if(root->left != NULL)
@@ -239,7 +248,7 @@ int treeSize(node *root)
 {
 	if(root == NULL) return 0;
 	
-	if(is_child(root) && (root->c == '*' || root->c == '\\'))
+	if(is_child(root) && (get_item(root) == '*' || get_item(root) == '\\'))
 	{
 		return 2;
 	}
@@ -266,14 +275,14 @@ void writeHuffmanTree(FILE *output, node *root)
 {
 	if(root == NULL) return;
 	
-	if((root->c == '*' || root->c == '\\') && is_child(root))
+	if((get_item(root) == '*' || get_item(root) == '\\') && is_child(root))
 	{
-		fprintf(output,"\\%c",root->c);
+		fprintf(output,"\\%c", get_item(root));
 	}
 
 	else
 	{
-		fprintf(output, "%c",root->c);
+		fprintf(output, "%c", get_item(root));
 	}
 
 	writeHuffmanTree(output, root->left);
@@ -452,7 +461,7 @@ void writeFileDecompressed(FILE *input, FILE *output, node *root, int trashSize,
 
 			if(is_child(rootAux))
 			{
-				fprintf(output, "%c", rootAux->c);
+				fprintf(output, "%c", get_item(rootAux));
 				rootAux = root;
 			}
 		}
@@ -472,8 +481,8 @@ void writeFileDecompressed(FILE *input, FILE *output, node *root, int trashSize,
 
 		if(is_child(rootAux))
 		{
-			printf("%c\n",rootAux->c);
-			fprintf(output, "%c", rootAux->c);
+			//printf("%c\n", get_item(rootAux));
+			fprintf(output, "%c", get_item(rootAux));
 			rootAux = root;
 		}
 	}
@@ -493,8 +502,35 @@ int decompress(FILE *input)
 
 int main()
 {
-	FILE *file;
-	file = fopen("comprimido.huff","rb");
-	decompress(file);
-	fclose(file);	
+	FILE *file; int entry; char path[200];
+	
+	printf("\n########### HUFFMAN ###########\n\n(1) COMPRESS OR (2) DECOMPRESS\n\nEntry:	");
+	
+	scanf("%d", &entry);
+	
+	switch (entry)
+	{
+		case 1:
+			printf("\nEnter a directory or a file name:	");
+			scanf("%s", &path);
+			file = fopen(path, "rb");
+			if(file==NULL) {puts("\nInvalid path.\n\n##### END OF EXECUTION ######\n"); break;}
+			compress(file);
+		break;
+
+		case 2:
+			printf("\nEnter a directory or file name:	");
+			scanf("%s", &path);
+			file = fopen(path, "rb");
+			if(file==NULL) {puts("\nInvalid path.\n\n##### END OF EXECUTION ######\n"); break;}
+			decompress(file);
+		break;
+
+		default:
+			printf("\nInvalid entry.\n\n##### END OF EXECUTION ######\n");	
+		return 0;
+	
+	}
+	
+	fclose(file);
 }
