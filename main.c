@@ -258,17 +258,17 @@ int treeSize(node *root)
 
 void writeHeader(FILE *output, int tree_size, int trash_size)
 {
-	unsigned char primeiroByte;
-	unsigned char segundoByte;
+	unsigned char firstByte;
+	unsigned char secondByte;
 	rewind(output);
 
-	primeiroByte = tree_size >> 8;
+	firstByte = tree_size >> 8;
 	trash_size = trash_size << 5;
-	primeiroByte |= trash_size;
-	segundoByte = tree_size;
+	firstByte |= trash_size;
+	secondByte = tree_size;
 
-	fprintf(output, "%c",primeiroByte);
-	fprintf(output, "%c",segundoByte);
+	fprintf(output, "%c",firstByte);
+	fprintf(output, "%c",secondByte);
 }
 
 void writeHuffmanTree(FILE *output, node *root)
@@ -516,6 +516,7 @@ int main()
 			file = fopen(path, "rb");
 			if(file==NULL) {puts("\nInvalid path.\n\n##### END OF EXECUTION ######\n"); break;}
 			compress(file);
+			printf("\n##### END OF EXECUTION ######\n");
 		break;
 
 		case 2:
@@ -524,6 +525,7 @@ int main()
 			file = fopen(path, "rb");
 			if(file==NULL) {puts("\nInvalid path.\n\n##### END OF EXECUTION ######\n"); break;}
 			decompress(file);
+			printf("\n##### END OF EXECUTION ######\n");
 		break;
 
 		default:
