@@ -325,7 +325,7 @@ void writeFileCompressed(FILE *input, FILE *output, unsigned char codeMap[][256]
 int compress(FILE *input)
 {
 	FILE *output;
-	output = fopen("comprimido.huff","wb");
+	output = fopen("compressed.huff","wb");
 
 	int frequency[256] = {0};
 	unsigned char codeMap[256][256];
@@ -348,7 +348,6 @@ int compress(FILE *input)
 	writeHuffmanTree(output, q->head);
 	writeFileCompressed(input, output, codeMap);
 
-	fclose(input);
 	fclose(output);
 }
 
@@ -370,31 +369,20 @@ int getTreeSize(FILE *input)
 	fseek(input, 0, SEEK_SET);
 	fscanf(input,"%c",&byte);
 
-	for(i = 4; i >= 0; i--)
-	{
-		if(is_bit_i_set(byte, i))
-		{
-			treeSize = set_bitInt(treeSize,i + 8);
-		}
-	}
+	byte = byte << 3;
+	byte = byte >> 3;
 
+	treeSize = byte;
+	treeSize = treeSize << 8;
+	
 	fscanf(input,"%c",&byte);
-
-	for(i = 7; i >= 0; i--)
-	{
-		if(is_bit_i_set(byte,i))
-		{
-			treeSize = set_bitInt(treeSize, i);
-		}
-	}
+	treeSize |= byte;
 	
 	return treeSize;
 }
 
-node *rebuildHuffmanTree(FILE *input, int *treeSize)
-{
-	if(treeSize < 0) return NULL;
-	
+node *rebuildHuffmanTree(FILE *input)
+{	
 	unsigned char c;
 	unsigned char aux;
 	node *root;
@@ -403,22 +391,18 @@ node *rebuildHuffmanTree(FILE *input, int *treeSize)
 	if(c == '*')
 	{
 		root = createNode(c,0);
-		(*treeSize)--;
-		root->left = rebuildHuffmanTree(input,treeSize);
-		(*treeSize)--;
-		root->right = rebuildHuffmanTree(input,treeSize);
+		root->left = rebuildHuffmanTree(input);
+		root->right = rebuildHuffmanTree(input);
 	}
 	
 	if(c == '\\')
 	{
-		(*treeSize)--;
 		fscanf(input,"%c",&c);
 		root = createNode(c,0);
 	}
 
 	else if(c != '*')
 	{
-		(*treeSize)--;
 		root = createNode(c,0);
 	}
 
@@ -481,22 +465,22 @@ void writeFileDecompressed(FILE *input, FILE *output, node *root, int trashSize,
 
 		if(is_child(rootAux))
 		{
-			//printf("%c\n", get_item(rootAux));
 			fprintf(output, "%c", get_item(rootAux));
 			rootAux = root;
 		}
 	}
 }
 
+
+
 int decompress(FILE *input)
 {
 	int trashSize = getTrashSize(input);
 	int treeSize = getTreeSize(input);
-	int treeSizeBackup = treeSize;
-	FILE *output = fopen("descomprimiu","wb");
+	FILE *output = fopen("decompressed","wb");
 
-	node *root = rebuildHuffmanTree(input,&treeSize);
-	writeFileDecompressed(input, output, root, trashSize, treeSizeBackup);
+	node *root = rebuildHuffmanTree(input);
+	writeFileDecompressed(input, output, root, trashSize, treeSize);
 
 }
 
