@@ -182,7 +182,7 @@ void createHuffmanTree(priorityQueue *q)
 	createHuffmanTree(q);
 }
 
-int is_child(node *t)
+int is_leaf(node *t)
 {
 	if(t->right == NULL && t->left == NULL) return 1;
 	else return 0;
@@ -192,7 +192,7 @@ int is_child(node *t)
 void generateCodeMap(unsigned char codeMap[][256], unsigned char *temp, node *root, int i)
 {
 
-	if(is_child(root))
+	if(is_leaf(root))
 	{
 		int j;
 		for(j = 0; j < i; j++)
@@ -248,7 +248,7 @@ int treeSize(node *root)
 {
 	if(root == NULL) return 0;
 	
-	if(is_child(root) && (get_item(root) == '*' || get_item(root) == '\\'))
+	if(is_leaf(root) && (get_item(root) == '*' || get_item(root) == '\\'))
 	{
 		return 2;
 	}
@@ -275,7 +275,7 @@ void writeHuffmanTree(FILE *output, node *root)
 {
 	if(root == NULL) return;
 	
-	if((get_item(root) == '*' || get_item(root) == '\\') && is_child(root))
+	if((get_item(root) == '*' || get_item(root) == '\\') && is_leaf(root))
 	{
 		fprintf(output,"\\%c", get_item(root));
 	}
@@ -443,7 +443,7 @@ void writeFileDecompressed(FILE *input, FILE *output, node *root, int trashSize,
 				rootAux = rootAux->left;
 			}
 
-			if(is_child(rootAux))
+			if(is_leaf(rootAux))
 			{
 				fprintf(output, "%c", get_item(rootAux));
 				rootAux = root;
@@ -463,7 +463,7 @@ void writeFileDecompressed(FILE *input, FILE *output, node *root, int trashSize,
 			rootAux = rootAux->left;
 		}
 
-		if(is_child(rootAux))
+		if(is_leaf(rootAux))
 		{
 			fprintf(output, "%c", get_item(rootAux));
 			rootAux = root;
